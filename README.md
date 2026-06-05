@@ -43,6 +43,17 @@ sha256sum -c checksums.txt --ignore-missing
 gh attestation verify ./linux-amd64 --repo agendrix/gh-attach
 ```
 
+> **On macOS**, two adjustments to the commands above:
+> - macOS ships no `sha256sum` — use `shasum -a 256 -c checksums.txt
+>   --ignore-missing` instead (or `brew install coreutils` for a real
+>   `sha256sum`).
+> - Use the `darwin-arm64` (Apple Silicon) or `darwin-amd64` (Intel)
+>   binary in steps 2–3, not `linux-amd64`.
+>
+> `cosign` is installed with `brew install cosign`. Run step 1 before
+> step 2: the checksum file only means something once its signature is
+> verified.
+
 ## Usage
 
 By default, `gh attach` uploads the files and prints the rendered markdown to **stdout** — it does *not* post a comment unless you ask. The caller decides what to do with the markdown: embed it in a PR body, pipe it to `gh pr comment`, paste it into Slack, or tee it to a file.
