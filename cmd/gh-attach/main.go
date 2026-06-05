@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/enthus-appdev/gh-attach/internal/cli"
+	"github.com/agendrix/gh-attach/internal/cli"
 )
 
 func main() {

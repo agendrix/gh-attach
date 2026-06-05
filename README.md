@@ -1,7 +1,7 @@
 # gh-attach
 
-[![Go](https://github.com/enthus-appdev/gh-attach/actions/workflows/go.yml/badge.svg)](https://github.com/enthus-appdev/gh-attach/actions/workflows/go.yml)
-[![Coverage](https://github.com/enthus-appdev/gh-attach/raw/badges/.badges/main/coverage.svg)](https://github.com/enthus-appdev/gh-attach/actions/workflows/go.yml)
+[![Go](https://github.com/agendrix/gh-attach/actions/workflows/go.yml/badge.svg)](https://github.com/agendrix/gh-attach/actions/workflows/go.yml)
+[![Coverage](https://github.com/agendrix/gh-attach/raw/badges/.badges/main/coverage.svg)](https://github.com/agendrix/gh-attach/actions/workflows/go.yml)
 
 A [gh](https://cli.github.com/) extension for uploading images to GitHub PRs and issues, privately scoped to repo visibility.
 
@@ -10,7 +10,35 @@ Images are pushed to an auth-protected ref under `refs/uploads/issues/<N>` (one 
 ## Install
 
 ```bash
-gh extension install enthus-appdev/gh-attach
+gh extension install agendrix/gh-attach
+```
+
+> This is Agendrix's internal hard fork of
+> [enthus-appdev/gh-attach](https://github.com/enthus-appdev/gh-attach).
+> We do not pull upstream automatically — changes are reviewed and
+> merged deliberately.
+
+### Verifying a release
+
+`gh extension install` itself does **not** verify checksums or
+signatures, so verify before trusting a binary in CI or on a shared
+machine. Every release ships a signed `checksums.txt` plus per-binary
+build-provenance attestations.
+
+```bash
+# 1. Verify the checksum file's keyless cosign signature (Sigstore).
+cosign verify-blob \
+  --certificate checksums.txt.pem \
+  --signature checksums.txt.sig \
+  --certificate-identity-regexp '^https://github.com/agendrix/gh-attach' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  checksums.txt
+
+# 2. Verify the downloaded binary against the now-trusted checksums.
+sha256sum -c checksums.txt --ignore-missing
+
+# 3. (Alternative) Verify GitHub-native build provenance for a binary.
+gh attestation verify ./linux-amd64 --repo agendrix/gh-attach
 ```
 
 ## Usage
@@ -37,8 +65,8 @@ gh attach --title "After fix" 123 diagram.png
 gh attach --comment 123 screenshot.png
 
 # Target a different repo (or run from outside any git clone)
-gh attach --repo enthus-appdev/gh-attach 123 screenshot.png
-gh attach --repo https://github.com/enthus-appdev/gh-attach 123 screenshot.png
+gh attach --repo agendrix/gh-attach 123 screenshot.png
+gh attach --repo https://github.com/agendrix/gh-attach 123 screenshot.png
 
 # Ad-hoc upload with no PR or issue (see "Ad-hoc uploads" below)
 gh attach --key design-v2 mockup.png
