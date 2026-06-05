@@ -26,13 +26,15 @@ jobs:
           go-version-file: go.mod
 
       # Pin to a release tag rather than a moving major so a compromised
-      # upstream tag can't silently change signing behaviour.
+      # upstream tag can't silently change signing behaviour. v4.x
+      # installs cosign v3, whose Sigstore-bundle format goreleaser-action
+      # requires to verify its own pinned download.
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3.7.0
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Run goreleaser
         id: goreleaser
-        uses: goreleaser/goreleaser-action@v7
+        uses: goreleaser/goreleaser-action@v7.2.2
         with:
           version: latest
           args: release --clean

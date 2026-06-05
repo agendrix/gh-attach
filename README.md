@@ -22,14 +22,16 @@ gh extension install agendrix/gh-attach
 
 `gh extension install` itself does **not** verify checksums or
 signatures, so verify before trusting a binary in CI or on a shared
-machine. Every release ships a signed `checksums.txt` plus per-binary
+machine. Every release ships a `checksums.txt` with a keyless cosign
+Sigstore bundle (`checksums.txt.sigstore.json`) plus per-binary
 build-provenance attestations.
 
 ```bash
 # 1. Verify the checksum file's keyless cosign signature (Sigstore).
+#    The .sigstore.json bundle carries the signature, certificate, and
+#    transparency-log proof — no separate .sig/.pem files needed.
 cosign verify-blob \
-  --certificate checksums.txt.pem \
-  --signature checksums.txt.sig \
+  --bundle checksums.txt.sigstore.json \
   --certificate-identity-regexp '^https://github.com/agendrix/gh-attach' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   checksums.txt
