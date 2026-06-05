@@ -1,3 +1,3 @@
-module github.com/enthus-appdev/gh-attach
+module github.com/agendrix/gh-attach
 
 go 1.26

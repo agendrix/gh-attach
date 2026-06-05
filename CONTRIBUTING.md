@@ -7,7 +7,7 @@ expect us to keep the tool small and the diffs narrow.
 
 ## Before you start
 
-- **Questions and ideas** → open an [issue](https://github.com/enthus-appdev/gh-attach/issues)
+- **Questions and ideas** → open an [issue](https://github.com/agendrix/gh-attach/issues)
   so we can discuss scope before you write code. For anything non-trivial,
   it saves everyone time to align on the shape of a change first.
 - **Bug reports** → also go in the issue tracker; please include your
@@ -37,7 +37,7 @@ clone.
 ## Clone and build
 
 ```bash
-git clone git@github.com:enthus-appdev/gh-attach.git
+git clone git@github.com:agendrix/gh-attach.git
 cd gh-attach
 go build ./...
 ```
@@ -54,7 +54,7 @@ To switch back to the released version later:
 
 ```bash
 gh extension remove gh-attach
-gh extension install enthus-appdev/gh-attach
+gh extension install agendrix/gh-attach
 ```
 
 ## Common commands

@@ -7,7 +7,7 @@ import (
 	"io"
 	"text/tabwriter"
 
-	"github.com/enthus-appdev/gh-attach/internal/gh"
+	"github.com/agendrix/gh-attach/internal/gh"
 )
 
 // runList implements the `gh attach list` subcommand. It queries the

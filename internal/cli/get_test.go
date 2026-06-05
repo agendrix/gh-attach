@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/enthus-appdev/gh-attach/internal/gh"
+	"github.com/agendrix/gh-attach/internal/gh"
 )
 
 // getDeps builds a runDeps where resolveRepo returns a canned repo,

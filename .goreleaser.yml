@@ -3,6 +3,15 @@ version: 2
 builds:
   - binary: gh-attach
     main: ./cmd/gh-attach
+    # Reproducible-ish builds: strip paths and embed version metadata
+    # only, so two builds of the same tag produce identical bytes.
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }} -X main.commit={{ .Commit }}
+    env:
+      - CGO_ENABLED=0
     goos:
       - darwin
       - linux
@@ -24,6 +33,35 @@ archives:
   # release artifact or script found" error that broke v0.1.x and v0.2.0.
   - formats: ['binary']
     name_template: "{{ .Os }}-{{ .Arch }}"
+
+# SHA-256 checksums over every release artifact. Consumers verify with
+# `sha256sum -c checksums.txt`. The checksums file is itself signed
+# below, so a tampered checksums file is detectable.
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+# Keyless signing of the checksums file via cosign + Sigstore. No
+# long-lived signing key to manage or leak — the signature is bound to
+# the GitHub Actions OIDC identity of this repo's release workflow.
+# Verify with:
+#   cosign verify-blob \
+#     --certificate checksums.txt.pem \
+#     --signature checksums.txt.sig \
+#     --certificate-identity-regexp '^https://github.com/agendrix/gh-attach' \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+#     checksums.txt
+signs:
+  - cmd: cosign
+    args:
+      - "sign-blob"
+      - "--yes"
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+    artifacts: checksum
+    output: true
+    certificate: "${artifact}.pem"
 
 changelog:
   sort: asc

@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/enthus-appdev/gh-attach/internal/gh"
+	"github.com/agendrix/gh-attach/internal/gh"
 )
 
 // uploadResult is the shape emitted to stdout when --json is passed.

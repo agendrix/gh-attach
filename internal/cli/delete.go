@@ -8,7 +8,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/enthus-appdev/gh-attach/internal/gh"
+	"github.com/agendrix/gh-attach/internal/gh"
 )
 
 // runDelete implements the `gh attach delete` subcommand. It prompts

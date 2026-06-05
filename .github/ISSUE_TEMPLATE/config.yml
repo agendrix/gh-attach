@@ -8,11 +8,11 @@ blank_issues_enabled: false
 
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/enthus-appdev/gh-attach/security/advisories/new
+    url: https://github.com/agendrix/gh-attach/security/advisories/new
     about: Do not file security issues publicly. Use GitHub Private Vulnerability Reporting so the report stays private until a fix is out.
   - name: Read the contributing guide
-    url: https://github.com/enthus-appdev/gh-attach/blob/main/CONTRIBUTING.md
+    url: https://github.com/agendrix/gh-attach/blob/main/CONTRIBUTING.md
     about: Dev workflow, build + test commands, commit conventions, and how to structure a PR.
   - name: Read the Code of Conduct
-    url: https://github.com/enthus-appdev/gh-attach/blob/main/CODE_OF_CONDUCT.md
+    url: https://github.com/agendrix/gh-attach/blob/main/CODE_OF_CONDUCT.md
     about: This project follows the Contributor Covenant. All issues, PRs, and discussions are governed by it.

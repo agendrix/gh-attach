@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/enthus-appdev/gh-attach/internal/gh"
+	"github.com/agendrix/gh-attach/internal/gh"
 )
 
 // downloadResult is the shape emitted to stdout when `gh attach get
@@ -173,13 +173,30 @@ func runGet(args []string, stdout, stderr io.Writer, deps runDeps) int {
 		return 1
 	}
 
+	// Pre-flight: resolve and validate every destination path BEFORE
+	// touching disk. Attachment paths come from a remote git tree
+	// (entry.Path) and are therefore attacker-influenceable — a tree
+	// entry like "../../etc/foo" would otherwise escape outputDir via
+	// filepath.Join (classic zip-slip). safeJoin rejects any path that
+	// resolves outside outputDir, and we fail the whole run on the
+	// first offender so a malicious ref can't write a single byte
+	// outside the target directory.
+	dsts := make([]string, len(attachments))
+	for i, a := range attachments {
+		dst, err := safeJoin(*outputDir, a.Path)
+		if err != nil {
+			_, _ = fmt.Fprintf(stderr, "error: refusing to write %q: %v\n", a.Path, err)
+			return 1
+		}
+		dsts[i] = dst
+	}
+
 	// Pre-flight check: if any target path already exists and --force
 	// is not set, fail before writing anything so a partial download
 	// can't leave the directory in a surprising state.
 	if !*force {
 		var conflicts []string
-		for _, a := range attachments {
-			dst := filepath.Join(*outputDir, a.Path)
+		for _, dst := range dsts {
 			if _, statErr := os.Stat(dst); statErr == nil {
 				conflicts = append(conflicts, dst)
 			}
@@ -194,10 +211,20 @@ func runGet(args []string, stdout, stderr io.Writer, deps runDeps) int {
 	}
 
 	// Write each file. Failures are reported but don't roll back —
-	// the partial download is useful for debugging.
+	// the partial download is useful for debugging. Paths were already
+	// validated by safeJoin above, so dsts[i] is guaranteed inside
+	// outputDir.
 	writtenPaths := make([]string, 0, len(attachments))
-	for _, a := range attachments {
-		dst := filepath.Join(*outputDir, a.Path)
+	for i, a := range attachments {
+		dst := dsts[i]
+		// A blob path may contain subdirectories (e.g. "docs/x.png").
+		// Create the parent chain; MkdirAll is a no-op when it exists.
+		if parent := filepath.Dir(dst); parent != "" {
+			if err := os.MkdirAll(parent, 0755); err != nil {
+				_, _ = fmt.Fprintf(stderr, "error: create dir for %s: %v\n", dst, err)
+				return 1
+			}
+		}
 		if err := os.WriteFile(dst, a.Content, 0644); err != nil {
 			_, _ = fmt.Fprintf(stderr, "error: write %s: %v\n", dst, err)
 			return 1
@@ -273,4 +300,53 @@ func humanizeBytes(n int64) string {
 	}
 	units := []string{"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
 	return fmt.Sprintf("%.1f %s", float64(n)/float64(div), units[exp])
+}
+
+// safeJoin joins a remote-supplied relative path onto a trusted base
+// directory and guarantees the result stays inside base. It defends
+// against zip-slip: attachment paths originate from a remote git tree
+// (entry.Path) and can be pushed via the raw Git Data API by anyone
+// with repo write access, so they are NOT trusted input.
+//
+// Rejected: absolute paths, paths containing a ".." segment, and any
+// path that — after cleaning — resolves outside base. Empty paths and
+// paths that clean to "." are also rejected (a blob must have a real
+// name). The returned path is the cleaned absolute-or-relative join,
+// safe to pass to os.WriteFile / os.MkdirAll.
+func safeJoin(base, p string) (string, error) {
+	if p == "" {
+		return "", errors.New("empty path")
+	}
+	if filepath.IsAbs(p) {
+		return "", errors.New("absolute path not allowed")
+	}
+	// Normalize separators so a Windows-style "..\\x" can't slip past a
+	// Unix-only check, then inspect each segment for "..".
+	norm := strings.ReplaceAll(p, "\\", "/")
+	for _, seg := range strings.Split(norm, "/") {
+		if seg == ".." {
+			return "", errors.New("path escapes output directory")
+		}
+	}
+	cleaned := filepath.Clean(p)
+	if cleaned == "." || cleaned == ".." {
+		return "", errors.New("invalid path")
+	}
+	dst := filepath.Join(base, cleaned)
+
+	// Defense in depth: confirm via prefix check that the final path is
+	// contained within base, independent of the segment scan above.
+	baseAbs, err := filepath.Abs(base)
+	if err != nil {
+		return "", fmt.Errorf("resolve base dir: %w", err)
+	}
+	dstAbs, err := filepath.Abs(dst)
+	if err != nil {
+		return "", fmt.Errorf("resolve dest path: %w", err)
+	}
+	rel, err := filepath.Rel(baseAbs, dstAbs)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", errors.New("path escapes output directory")
+	}
+	return dst, nil
 }

@@ -6,7 +6,9 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: write       # create the GitHub Release + upload assets
+  id-token: write       # OIDC token for cosign keyless signing
+  attestations: write   # GitHub build provenance attestations
 
 jobs:
   release:
@@ -23,10 +25,24 @@ jobs:
         with:
           go-version-file: go.mod
 
+      # Pin to a release tag rather than a moving major so a compromised
+      # upstream tag can't silently change signing behaviour.
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3.7.0
+
       - name: Run goreleaser
+        id: goreleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # GitHub-native build provenance: a signed attestation binding the
+      # released binaries to this workflow/commit. Independent of cosign;
+      # auditors verify with `gh attestation verify <binary> --repo agendrix/gh-attach`.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/*/gh-attach'

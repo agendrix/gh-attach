@@ -26,7 +26,14 @@ indexable and broadcast the vulnerability before a fix is available.
 
 Use GitHub's Private Vulnerability Reporting:
 
-👉 **[Report a vulnerability](https://github.com/enthus-appdev/gh-attach/security/advisories/new)**
+👉 **[Report a vulnerability](https://github.com/agendrix/gh-attach/security/advisories/new)**
+
+## Release integrity
+
+Releases ship a cosign-signed `checksums.txt` and per-binary build
+provenance attestations. `gh extension install` does not verify these
+automatically — see the "Verifying a release" section in the README for
+the verification steps to run in CI or on shared machines.
 
 Private Vulnerability Reporting is enabled on this repository. The report is
 visible only to you and the maintainers; GitHub handles the advisory workflow
